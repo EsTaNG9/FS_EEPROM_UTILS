@@ -63,9 +63,12 @@ Returns:
 #include "i2c.h"
 #include "usart.h"
 
-#define STEERING_MAX 0xA1
-
 int main(void) {
+    HAL_Init();
+    SystemClock_Config();
+    MX_GPIO_Init();
+    MX_I2C1_Init();
+    MX_USART1_UART_Init();
 
     // Write calibration value
     Write_EEPROM(&hi2c1, STEERING_MAX, 1234, true);
