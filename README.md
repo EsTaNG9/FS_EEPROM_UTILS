@@ -16,9 +16,8 @@ A minimal and efficient utility for storing and retrieving configuration values 
 ## 🔧 Dependencies
 
 - STM32 HAL libraries  
-- `ee24.h` / `ee24.c` EEPROM driver (e.g., 24FC08)  
+- [`ee24.h` / `ee24.c`](https://github.com/nimaltd/ee24) EEPROM driver (e.g., 24FC08)  
 - Configured UART for `printf` (e.g., `__io_putchar`)  
-
 ---
 
 ## 🧠 API Reference
