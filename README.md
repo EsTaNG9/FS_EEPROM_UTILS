@@ -84,6 +84,5 @@ int main(void) {
 
     // Analyze EEPROM content
     Analyze_EEPROM(&hi2c1);
-
-    while (1) {}
+	
 }
