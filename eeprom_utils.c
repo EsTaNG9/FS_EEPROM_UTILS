@@ -10,8 +10,11 @@ uint8_t uart_message[UART_BUFFER_SIZE];       // Full message buffer
 volatile uint8_t uart_index = 0;
 volatile bool uart_message_ready = false;
 
-bool Write_EEPROM(I2C_HandleTypeDef *HI2c, uint8_t type, uint16_t value, bool debug) {
-uint8_t info[16] = { 0xFF };
+static UART_HandleTypeDef *global_uart = NULL;  // For putchar fallback
+
+bool Write_EEPROM(EEPROM_Comms *comms, uint8_t type, uint16_t value, bool debug) {
+	global_uart = comms->huart;
+	uint8_t info[16] = { 0xFF };
 	bool foundType = false;
 	//bool foundEmpty = false;
 	uint8_t emptyColum = 99;
@@ -33,7 +36,7 @@ uint8_t info[16] = { 0xFF };
 	}
 
 	// Inincializacao
-	if (EE24_Init(&ee24fc08, HI2c, EE24_ADDRESS_DEFAULT)) {
+	if (EE24_Init(&ee24fc08, comms->hi2c, EE24_ADDRESS_DEFAULT)) {
 
 		if (!EE24_Read(&ee24fc08, 0x00000010, info, 16, 1000)) {
 			if (debug)
@@ -124,13 +127,13 @@ uint8_t info[16] = { 0xFF };
 	}
 }
 
-
-int Read_EEPROM(I2C_HandleTypeDef *HI2c, uint8_t type, bool debug) {
-uint8_t info[16] = { 0xFF };
+int Read_EEPROM(EEPROM_Comms *comms, uint8_t type, bool debug) {
+	global_uart = comms->huart;
+	uint8_t info[16] = { 0xFF };
 	uint8_t foundColum = 99;
 
 	// Iniciar EEPROM
-	if (!EE24_Init(&ee24fc08, HI2c, EE24_ADDRESS_DEFAULT)) {
+	if (!EE24_Init(&ee24fc08, comms->hi2c, EE24_ADDRESS_DEFAULT)) {
 		if (debug)
 			printf("READ EEPROM: Falha na conexão com o EEPROM \n");
 		return -1;
@@ -223,11 +226,11 @@ uint8_t info[16] = { 0xFF };
 
 }
 
-
-bool Analyze_EEPROM(I2C_HandleTypeDef *HI2c) {
+bool Analyze_EEPROM(EEPROM_Comms *comms) {
+	global_uart = comms->huart;
 	uint8_t info[16] = { 0xFF };
 
-	if (!EE24_Init(&ee24fc08, HI2c, EE24_ADDRESS_DEFAULT)) {
+	if (!EE24_Init(&ee24fc08, comms->hi2c, EE24_ADDRESS_DEFAULT)) {
 		printf("PRINT EEPROM: Falha na conexão com o EEPROM\n");
 		return false;
 	}
@@ -379,16 +382,15 @@ bool Analyze_EEPROM(I2C_HandleTypeDef *HI2c) {
 		bool duplicate = false;
 		uint8_t eeprom_index[16];
 		if (!EE24_Read(&ee24fc08, 0x00000010, eeprom_index, 16, 1000)) {
-		    printf("Failed to read EEPROM index for duplicate check.\n");
-		    return false;
+			printf("Failed to read EEPROM index for duplicate check.\n");
+			return false;
 		}
 		for (uint8_t i = 0; i < 16; i++) {
-		    if (eeprom_index[i] == new_type) {
-		        duplicate = true;
-		        break;
-		    }
+			if (eeprom_index[i] == new_type) {
+				duplicate = true;
+				break;
+			}
 		}
-
 
 		if (duplicate) {
 			printf("Type 0x%02X already exists. Cannot add duplicate.\n", new_type);
@@ -406,7 +408,7 @@ bool Analyze_EEPROM(I2C_HandleTypeDef *HI2c) {
 		uint16_t new_value = (uint16_t) atoi((const char*) uart_message);
 
 		// Call Write_EEPROM directly
-		if (Write_EEPROM(HI2c, new_type, new_value, true)) {
+		if (Write_EEPROM(comms->hi2c, new_type, new_value, true)) {
 			printf("New type 0x%02X with value %d added successfully.\n", new_type, new_value);
 		} else {
 			printf("Failed to add new type.\n");
@@ -422,12 +424,13 @@ bool Analyze_EEPROM(I2C_HandleTypeDef *HI2c) {
 }
 
 PUTCHAR_PROTOTYPE {
-	HAL_UART_Transmit(&huart1, (uint8_t*) &ch, 1, 0xFFFF);
+	if (global_uart)
+		HAL_UART_Transmit(global_uart, (uint8_t*) &ch, 1, 0xFFFF);
 	return ch;
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-	if (huart->Instance == USART1) {
+	if (huart == global_uart) {
 		uint8_t byte = uart_rx_buffer[0];
 
 		if (byte == '\n' || byte == '\r') {
@@ -441,6 +444,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 		}
 
 		// Re-enable UART interrupt for next byte
-		HAL_UART_Receive_IT(&huart1, uart_rx_buffer, 1);
+		HAL_UART_Receive_IT(global_uart, uart_rx_buffer, 1);
 	}
 }

@@ -71,18 +71,23 @@ Returns:
 
 #define STEERING_MAX 0xA1
 
+EEPROM_Comms eeprom_comms = {
+    .hi2c = &hi2c1,
+    .huart = &huart1 //NULL, se não for preciso utilizar
+};
+
 int main(void) {
 
     // Write calibration value
-    Write_EEPROM(&hi2c1, STEERING_MAX, 1234, true);
+    Write_EEPROM(&eeprom_comms, STEERING_MAX, 1234, true);
 
     // Read back
-    int value = Read_EEPROM(&hi2c1, STEERING_MAX, true);
+    int value = Read_EEPROM(&eeprom_comms, STEERING_MAX, true);
     if (value >= 0) {
         printf("Read value: %d\n", value);
     }
 
     // Analyze EEPROM content
-    Analyze_EEPROM(&hi2c1);
+    Analyze_EEPROM(&eeprom_comms);
 	
 }

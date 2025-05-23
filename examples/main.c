@@ -29,7 +29,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -39,7 +38,10 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+EEPROM_Comms eeprom_comms = {
+    .hi2c = &hi2c1,
+    .huart = &huart1
+};
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -89,19 +91,19 @@ int main(void) {
 	MX_I2C1_Init();
 	/* USER CODE BEGIN 2 */
 
-	if (Write_EEPROM(&hi2c1, STEERING_MAX, 4555, true)) {
+	if (Write_EEPROM(&eeprom_comms, STEERING_MAX, 2334, true)) {
 		printf("good \n");
 	} else {
 		printf("bad \n");
 	}
 
-	if (Read_EEPROM(&hi2c1, STEERING_MAX, true) > -1) {
+	if (Read_EEPROM(&eeprom_comms, STEERING_MAX, true) > -1) {
 		printf("good \n");
 	} else {
 		printf("bad2 \n");
 	}
 
-	if (Analyze_EEPROM(&hi2c1)) {
+	if (Analyze_EEPROM(&eeprom_comms)) {
 		printf("good\n");
 	}
 	/* USER CODE END 2 */

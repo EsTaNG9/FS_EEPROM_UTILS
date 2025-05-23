@@ -13,13 +13,18 @@ extern "C" {
 
 #include "i2c.h"
 #include "usart.h"
-#include "usart.h"
 #include "ee24.h"
 
+typedef struct {
+    I2C_HandleTypeDef *hi2c;
+    UART_HandleTypeDef *huart;
+} EEPROM_Comms;
+
 // Function Prototypes
-bool Write_EEPROM(I2C_HandleTypeDef *HI2c, uint8_t type, uint16_t value, bool debug);
-int  Read_EEPROM(I2C_HandleTypeDef *HI2c, uint8_t type, bool debug);
-bool Analyze_EEPROM(I2C_HandleTypeDef *HI2c);
+bool Write_EEPROM(EEPROM_Comms *comms, uint8_t type, uint16_t value, bool debug);
+int  Read_EEPROM(EEPROM_Comms *comms, uint8_t type, bool debug);
+bool Analyze_EEPROM(EEPROM_Comms *comms);
+void set_uart(EEPROM_Comms *comms, UART_HandleTypeDef *huart);
 
 #ifdef __cplusplus
 }
