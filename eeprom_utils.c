@@ -1,11 +1,16 @@
 #include "eeprom_utils.h"
-#include "ee24.h"    // EEPROM library
-#include "stdio.h"
-#include "string.h"
+
+#define UART_BUFFER_SIZE 64
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
 
 static EE24_HandleTypeDef ee24fc08;  // Static to this file
 
-bool Write_EEPROM(I2C_HandleTypeDef *hi2c, uint8_t type, uint16_t value, bool debug) {
+uint8_t uart_rx_buffer[1];                    // Temp buffer for 1 byte
+uint8_t uart_message[UART_BUFFER_SIZE];       // Full message buffer
+volatile uint8_t uart_index = 0;
+volatile bool uart_message_ready = false;
+
+bool Write_EEPROM(I2C_HandleTypeDef *HI2c, uint8_t type, uint16_t value, bool debug) {
 uint8_t info[16] = { 0xFF };
 	bool foundType = false;
 	//bool foundEmpty = false;
@@ -120,7 +125,7 @@ uint8_t info[16] = { 0xFF };
 }
 
 
-int Read_EEPROM(I2C_HandleTypeDef *hi2c, uint8_t type, bool debug) {
+int Read_EEPROM(I2C_HandleTypeDef *HI2c, uint8_t type, bool debug) {
 uint8_t info[16] = { 0xFF };
 	uint8_t foundColum = 99;
 
@@ -219,7 +224,7 @@ uint8_t info[16] = { 0xFF };
 }
 
 
-bool Analyze_EEPROM(I2C_HandleTypeDef *hi2c) {
+bool Analyze_EEPROM(I2C_HandleTypeDef *HI2c) {
 	uint8_t info[16] = { 0xFF };
 
 	if (!EE24_Init(&ee24fc08, HI2c, EE24_ADDRESS_DEFAULT)) {
@@ -414,4 +419,28 @@ bool Analyze_EEPROM(I2C_HandleTypeDef *hi2c) {
 	}
 
 	return true;
+}
+
+PUTCHAR_PROTOTYPE {
+	HAL_UART_Transmit(&huart1, (uint8_t*) &ch, 1, 0xFFFF);
+	return ch;
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+	if (huart->Instance == USART1) {
+		uint8_t byte = uart_rx_buffer[0];
+
+		if (byte == '\n' || byte == '\r') {
+			uart_message[uart_index] = '\0';   // Null-terminate string
+			uart_message_ready = true;
+			uart_index = 0;
+		} else {
+			if (uart_index < UART_BUFFER_SIZE - 1) {
+				uart_message[uart_index++] = byte;
+			}
+		}
+
+		// Re-enable UART interrupt for next byte
+		HAL_UART_Receive_IT(&huart1, uart_rx_buffer, 1);
+	}
 }

@@ -6,18 +6,18 @@ A minimal and efficient utility for storing and retrieving configuration values 
 
 ## 📌 Features
 
-- Simple `Write`, `Read`, and `Analyze` API
-- Redundancy with big-endian & little-endian value storage
-- Human-readable EEPROM memory dump for debugging
-- Fully portable: just include the header
+- Simple `Write`, `Read`, and `Analyze` API  
+- Redundancy with big-endian & little-endian value storage  
+- Human-readable EEPROM memory dump for debugging  
+- Fully portable: just include the header  
 
 ---
 
 ## 🔧 Dependencies
 
-- STM32 HAL libraries
-- `ee24.h` / `ee24.c` EEPROM driver (e.g., 24FC08)
-- Configured UART for `printf` (e.g., `__io_putchar`)
+- STM32 HAL libraries  
+- `ee24.h` / `ee24.c` EEPROM driver (e.g., 24FC08)  
+- Configured UART for `printf` (e.g., `__io_putchar`)  
 
 ---
 
@@ -53,6 +53,11 @@ Prints all used EEPROM slots in a table.
 Returns:
 - `true` if successful
 - `false` if read fails
+
+---
+
+## 📘 Example Diagram
+![EEPROM Wiring Diagram](./pics/diagram1.png)
 
 ---
 
