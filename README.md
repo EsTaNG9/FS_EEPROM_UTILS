@@ -62,6 +62,8 @@ Returns:
 
 ## 📘 Example Usage
 
+> 🔎 **Full example available in [`./examples/main.c`](./examples/main.c)**
+
 ```c
 #include "eeprom_utils.h"
 #include "i2c.h"
